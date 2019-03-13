@@ -1,6 +1,6 @@
 class Router {
   /**
-   * Creates an instance of Router.
+   * @description Creates an instance of Router.
    * @param {Node} container
    * @param {Array} routes
    * @memberof Router
@@ -12,12 +12,8 @@ class Router {
     this._init();
   }
 
-  _escape(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  }
-
   /**
-   * Initialise les écouteurs d'evenement
+   * @description Initialise les écouteurs d'evenement
    * @memberof Router
    */
   _init() {
@@ -30,8 +26,7 @@ class Router {
   }
 
   /**
-   * Vérifie si la route est bien formatée
-   *
+   * @description Vérifie si la route est bien formatée
    * @param {String} path
    * @returns {String}
    * @memberof Router
@@ -50,11 +45,25 @@ class Router {
   }
 
   /**
-   * Récupère l'objet de la route courante
-   * Rend la page courante
+   * @description Vérifie si chaque route a une clé "path"
+   * @param {String} path
+   * @memberof Router
+   */
+  _checkPathExist(path) {
+    this.routes.forEach((route, i) => {
+      if (!route.hasOwnProperty('path')) {
+        throw `path is missing on route number \`${i}\``;
+      }
+    });
+  }
+
+  /**
+   * @description Récupère l'objet de la route courante puis rend la page courante
    * @memberof Router
    */
   _render() {
+    this._checkPathExist();
+
     this.routes.forEach((route) => {
       route.path = this._formatPath(route.path);
     });
@@ -71,24 +80,23 @@ class Router {
   }
 
   /**
-   * Vérifie si l'url existe dans les routes
-   * Retourne l'objet de la route correspondante
+   * @description Vérifie si l'url existe parmi les routes
    * @param {String} url
    * @param {Array} routes
-   * @returns {Object}
+   * @returns {Object} Retourne l'objet de la route correspondante
    * @memberof Router
    */
   _match(url, routes) {
     return routes.find(({ path }) => {
       const generatedURLRegExp = this._generateURLRegExp(path);
-      let matches = url.match(generatedURLRegExp);
+      const matches = url.match(generatedURLRegExp);
 
       if (url !== '/' && generatedURLRegExp.test('/')) {
         return false;
       }
 
       if (generatedURLRegExp.test(url) && matches[0].includes(url)) {
-        this.params = this._getParams(path, matches);
+        this.params = matches.groups;
         return true;
       }
 
@@ -97,69 +105,45 @@ class Router {
   }
 
   /**
-   * Génère la regexp de l'url
-   *
+   * @description Génère la regexp de l'url
    * @param {String} path
    * @returns {RegExp}
    * @memberof Router
    */
   _generateURLRegExp(path) {
-    let reg = path.replace(/\{([^\s\/\:]+)\:?(.*?)?\}/g, (...args) => {
-      let reg = args[2];
-      if (reg) this._escape(reg);
-      return reg || '([^s/:]+)';
-    });
-
-    return new RegExp(reg + '/?');
+    const reg = /\{([^\s\/\:]+)\:?(?:\((.*?)\))?\}/g;
+    return new RegExp(
+      `${path.replace(reg, (...args) =>
+        args[2] ? `(?<${args[1]}>${args[2]})` : `(?<${args[1]}>\\w+)`
+      )}/?`
+    );
   }
 
   /**
-   * Récupère les paramètres de l'url
-   *
-   * @param {String} path
-   * @param {Array} matches
-   * @returns
-   * @memberof Router
-   */
-  _getParams(path, matches) {
-    let array;
-    let obj = {};
-    let i = 0;
-    const reg = /\{([^\s\/\:]+)\:?(.*?)?\}/g;
-    matches.shift();
-    while ((array = reg.exec(path)) !== null) {
-      obj[array[1]] = matches[i];
-      i++;
-    }
-    return obj;
-  }
-
-  /**
-   * Redirige vers la route demandée
-   *
+   * @description Redirige vers la route demandée
    * @param {*} [route=this.routes]
-   * @returns
    * @memberof Router
    */
   redirect(route = this.routes) {
     if (typeof route === 'string') {
-      let redirectRoute = this.route.find(({ path }) => path.includes(route));
-      if (!redirect) throw `404 not found : ${window.location.pathname}`;
+      const redirectRoute = this.route.find(({ path }) => path.includes(route));
+      if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
       history.replaceState({ key: redirectRoute }, '', redirectRoute);
       this.container.innerHTML = redirectRoute.controller();
       return;
     }
-    let redirect = route.find(({ path }) => path.includes('*'));
+    const redirect = route.find(({ path }) => path.includes('*'));
     if (!redirect) throw `404 not found : ${window.location.pathname}`;
-    let redirectRoute = route.find(({ path }) =>
+    const redirectRoute = route.find(({ path }) =>
       path.includes(redirect.redirect)
     );
+    if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
     history.replaceState({ key: redirectRoute.path }, '', redirectRoute.path);
     this.container.innerHTML = redirectRoute.controller();
   }
 
   /**
-   * Action au clique sur un lien ayant l'attribut 'data-router-link'
+   * @description Action au clique sur un lien ayant l'attribut 'data-router-link'
    * @param {Event} e
    * @memberof Router
    */
@@ -175,7 +159,6 @@ class Router {
 
 let router = new Router('#app', [
   {
-    path: '',
     controller: function() {
       return `<h1>Home</h1>
       <a href="/profils" data-router-link>Aller à la liste de profils</a>`;
