@@ -1,22 +1,26 @@
-class Router {
+export class Router {
   /**
    * @description Creates an instance of Router.
-   * @param {Node} container
-   * @param {Array} routes
+   * @param {string|object} container
+   * @param {object[]} routes
    * @memberof Router
    */
   constructor(container, routes) {
-    this.container = document.querySelector(container);
-    this.routes = routes;
+    this.container = this._checkContainerType(container);
+    this.routes = this._checkRoutesType(routes);
     this.params = {};
-    this._init();
+    this._checkPathExist();
+    this.routes.forEach((route) => {
+      route.path = this._formatPath(route.path);
+    });
+    this._initEvent();
   }
 
   /**
    * @description Initialise les écouteurs d'evenement
    * @memberof Router
    */
-  _init() {
+  _initEvent() {
     window.addEventListener('load', this._render.bind(this));
     window.addEventListener('popstate', this._render.bind(this));
     this.container.addEventListener(
@@ -45,6 +49,39 @@ class Router {
   }
 
   /**
+   * @description Vérifie le container est une string ou un object
+   * @param {String} path
+   * @memberof Router
+   */
+  _checkContainerType(container) {
+    if (typeof container === 'string') {
+      return document.querySelector(container);
+    } else if (!Array.isArray(container)) {
+      return container;
+    } else {
+      throw 'The first argument must be an element or a string selector';
+    }
+  }
+
+  /**
+   * @description Vérifie les routes est un tableau d'objets
+   * @param {String} path
+   * @memberof Router
+   */
+  _checkRoutesType(routes) {
+    if (Array.isArray(routes)) {
+      let isObjectArray = routes.every(
+        (route) => typeof route === 'object' && !Array.isArray(route)
+      );
+      if (!isObjectArray) {
+        throw 'The second argument must be an array of object';
+      }
+      return routes;
+    }
+    throw 'The second argument must be an array of object';
+  }
+
+  /**
    * @description Vérifie si chaque route a une clé "path"
    * @param {String} path
    * @memberof Router
@@ -62,12 +99,6 @@ class Router {
    * @memberof Router
    */
   _render() {
-    this._checkPathExist();
-
-    this.routes.forEach((route) => {
-      route.path = this._formatPath(route.path);
-    });
-
     let match = this._match(window.location.pathname, this.routes);
 
     if (match && match.hasOwnProperty('redirect')) {
@@ -159,6 +190,7 @@ class Router {
 
 let router = new Router('#app', [
   {
+    path: '/',
     controller: function() {
       return `<h1>Home</h1>
       <a href="/profils" data-router-link>Aller à la liste de profils</a>`;
