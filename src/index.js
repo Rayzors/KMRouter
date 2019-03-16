@@ -1,8 +1,8 @@
 export class Router {
   /**
    * @description Creates an instance of Router.
-   * @param {string|object} container
-   * @param {object[]} routes
+   * @param {string|Node} container
+   * @param {Object[]} routes
    * @memberof Router
    */
   constructor(container, routes) {
@@ -49,14 +49,15 @@ export class Router {
   }
 
   /**
-   * @description Vérifie le container est une string ou un object
-   * @param {String} path
+   * @description Vérifie si le paramètre container est une string ou un object
+   * @param {String|Node} container
+   * @returns {Node}
    * @memberof Router
    */
   _checkContainerType(container) {
     if (typeof container === 'string') {
       return document.querySelector(container);
-    } else if (!Array.isArray(container)) {
+    } else if (container instanceof Node) {
       return container;
     } else {
       throw 'The first argument must be an element or a string selector';
@@ -64,8 +65,10 @@ export class Router {
   }
 
   /**
-   * @description Vérifie les routes est un tableau d'objets
-   * @param {String} path
+   * @description Vérifie si le paramètre routes est un tableau d'objets
+   * @param {Array} routes
+   * @returns {Array}
+   * @throws The second argument must be an array of object
    * @memberof Router
    */
   _checkRoutesType(routes) {
@@ -84,9 +87,10 @@ export class Router {
   /**
    * @description Vérifie si chaque route a une clé "path"
    * @param {String} path
+   * @throws path is missing on route number {i}
    * @memberof Router
    */
-  _checkPathExist(path) {
+  _checkPathExist() {
     this.routes.forEach((route, i) => {
       if (!route.hasOwnProperty('path')) {
         throw `path is missing on route number \`${i}\``;
@@ -113,7 +117,7 @@ export class Router {
   /**
    * @description Vérifie si l'url existe parmi les routes
    * @param {String} url
-   * @param {Array} routes
+   * @param {Object[]} routes
    * @returns {Object} Retourne l'objet de la route correspondante
    * @memberof Router
    */
@@ -152,7 +156,8 @@ export class Router {
 
   /**
    * @description Redirige vers la route demandée
-   * @param {*} [route=this.routes]
+   * @param {String|Object[]} [route=this.routes]
+   * @throws throw `404 not found : {window.location.pathname}
    * @memberof Router
    */
   redirect(route = this.routes) {
@@ -176,7 +181,9 @@ export class Router {
     }
     if (redirect.hasOwnProperty('controller')) {
       this.container.innerHTML = redirect.controller();
+      return;
     }
+    throw `404 not found : ${window.location.pathname}`;
   }
 
   /**
