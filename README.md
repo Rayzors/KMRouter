@@ -2,9 +2,38 @@
 
 ## Quick start
 
-> ⚠️ before to use this router, you have to configure your server. Your server must redirect all the requests to `ìndex.html`
+### Server configuration
 
-### Installation
+Before using this router, the server must be configured. The server must redirect all the requests to `ìndex.html`
+
+#### Apache
+
+You can do it in a `.htaccess` file at the root of your folder
+
+```apache
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [L]
+```
+
+#### Nginx
+
+```nginx
+location / {
+  try_files $uri /index.html;
+}
+```
+
+### Set the view container
+
+A `div` must be added in the `<body>` of your `index.html` to receive the view sent by the router.
+
+```HTML
+<div id="app"></div>
+```
+
+### Package Installation
 
 #### NPM
 
@@ -14,9 +43,9 @@
 import { KMRouter } from 'kmrouter';
 ```
 
-### Create your routes
+### Routes creation
 
-Routes is an array of object where each object is a route. A route must have 2 keys :
+Routes are an array of object where each object is a route. A route must have 2 keys :
 
 - path : `String`. The path of your route.
 - controller : `Function`. The controller of your route.
@@ -34,7 +63,7 @@ let routes = [
 ]
 ```
 
-### Initialize the router
+### Router initialization
 
 The Router class takes some arguments:
 
@@ -42,7 +71,7 @@ The Router class takes some arguments:
 - List of your routes : `Object[]`.
 
 ```JS
-let router = new Router("#app", routes)
+let router = new KMRouter("#app", routes)
 ```
 
 ## Additional route settings
