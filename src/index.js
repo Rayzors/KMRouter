@@ -157,20 +157,26 @@ export class Router {
    */
   redirect(route = this.routes) {
     if (typeof route === 'string') {
-      const redirectRoute = this.route.find(({ path }) => path.includes(route));
+      const redirectRoute = this._match(route, this.routes);
       if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
-      history.replaceState({ key: redirectRoute }, '', redirectRoute);
+      history.replaceState({ key: route }, '', route);
       this.container.innerHTML = redirectRoute.controller();
       return;
     }
     const redirect = route.find(({ path }) => path.includes('*'));
     if (!redirect) throw `404 not found : ${window.location.pathname}`;
-    const redirectRoute = route.find(({ path }) =>
-      path.includes(redirect.redirect)
-    );
-    if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
-    history.replaceState({ key: redirectRoute.path }, '', redirectRoute.path);
-    this.container.innerHTML = redirectRoute.controller();
+    if (redirect.hasOwnProperty('redirect')) {
+      const redirectRoute = route.find(({ path }) =>
+        path.includes(redirect.redirect)
+      );
+      if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
+      history.replaceState({ key: redirectRoute.path }, '', redirectRoute.path);
+      this.container.innerHTML = redirectRoute.controller();
+      return;
+    }
+    if (redirect.hasOwnProperty('controller')) {
+      this.container.innerHTML = redirect.controller();
+    }
   }
 
   /**
@@ -197,7 +203,7 @@ let router = new Router('#app', [
     }
   },
   {
-    path: 'profils',
+    path: '/profils',
     controller() {
       return `<h1>Liste de profils</h1>
       <ul>
@@ -223,15 +229,10 @@ let router = new Router('#app', [
     }
   },
   {
-    path: '/notfound',
+    path: '\\*',
     controller() {
       return `<h1>404 not found</h1>
       <a href="/" data-router-link>Aller à la home</a>`;
     }
-  },
-
-  {
-    path: '\\*',
-    redirect: '/notfound'
   }
 ]);
