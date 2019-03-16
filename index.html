@@ -9,5 +9,49 @@
   <body>
     <div id="app"></div>
     <script src="//router.test/dist/index.js"></script>
+    <script>
+      let router = new Router('#app', [
+        {
+          path: '/',
+          controller: function() {
+            return `<h1>Home</h1>
+            <a href="/profils" data-router-link>Aller à la liste de profils</a>`;
+          }
+        },
+        {
+          path: '/profils',
+          controller() {
+            return `<h1>Liste de profils</h1>
+            <ul>
+              <li>
+                <a href="/profil/theo" data-router-link>Theo</a>
+              </li>
+            </ul>
+            <a href="/profils" data-router-link>Aller à la liste</a>`;
+          }
+        },
+        {
+          path: '/profil/{id}',
+          controller() {
+            return `<h1>${router.params.id}</h1>
+            a href="/" data-router-link>Aller à la home</a>`;
+          }
+        },
+        {
+          path: '/profil/{name:(\\w+)}/{id:(\\d+)}',
+          controller() {
+            return `<h1>${router.params.name} ${router.params.id}</h1>
+            <a href="/" data-router-link>Aller à la home</a>`;
+          }
+        },
+        {
+          path: '\\*',
+          controller() {
+            return `<h1>404 not found</h1>
+            <a href="/" data-router-link>Aller à la home</a>`;
+          }
+        }
+      ]);
+    </script>
   </body>
 </html>
