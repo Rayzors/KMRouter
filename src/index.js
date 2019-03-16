@@ -1,4 +1,4 @@
-export class Router {
+export class KMRouter {
   /**
    * @description Creates an instance of Router.
    * @param {string|Node} container

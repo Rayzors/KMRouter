@@ -2,6 +2,18 @@
 
 ## Quick start
 
+> ⚠️ before to use this router, you have to configure your server. Your server must redirect all the requests to `ìndex.html`
+
+### Installation
+
+#### NPM
+
+`npm i kmrouter`
+
+```JS
+import { KMRouter } from 'kmrouter';
+```
+
 ### Create your routes
 
 Routes is an array of object where each object is a route. A route must have 2 keys :
