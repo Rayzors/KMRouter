@@ -1,0 +1,29 @@
+{
+  "name": "kmrouter",
+  "version": "1.0.0",
+  "description": "Un routeur JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rayzors/myRouter.git"
+  },
+  "author": "Kevin Manssat",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rayzors/myRouter/issues"
+  },
+  "homepage": "https://github.com/Rayzors/myRouter#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/plugin-transform-named-capturing-groups-regex": "^7.3.0",
+    "@babel/preset-env": "^7.3.4",
+    "babel-loader": "^8.0.5",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}
