@@ -8,7 +8,7 @@
   </head>
   <body>
     <div id="app"></div>
-    <script src="//router.test/dist/index.js"></script>
+    <script src="/dist/index.js"></script>
     <script>
       let router = new KMRouter('#app', [
         {
@@ -32,15 +32,15 @@
         },
         {
           path: '/profil/{id}',
-          controller() {
-            return `<h1>${router.params.id}</h1>
-            a href="/" data-router-link>Aller à la home</a>`;
+          controller(request) {
+            return `<h1>${request.params.id}</h1>
+            <a href="/" data-router-link>Aller à la home</a>`;
           }
         },
         {
           path: '/profil/{name:(\\w+)}/{id:(\\d+)}',
-          controller() {
-            return `<h1>${router.params.name} ${router.params.id}</h1>
+          controller(request) {
+            return `<h1>${request.params.name} ${request.params.id}</h1>
             <a href="/" data-router-link>Aller à la home</a>`;
           }
         },
