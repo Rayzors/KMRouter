@@ -108,7 +108,11 @@ export class KMRouter {
     if (match && match.hasOwnProperty('redirect')) {
       this.redirect(match.redirect);
     } else if (match) {
-      this.container.innerHTML = match.controller();
+      this.container.innerHTML = match.controller({
+        redirect: this.redirect.bind(this),
+        params: this.params,
+        path: window.location.pathname
+      });
     } else {
       this.redirect();
     }
@@ -166,7 +170,7 @@ export class KMRouter {
       if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
       history.replaceState({ key: route }, '', route);
       this.container.innerHTML = redirectRoute.controller();
-      return;
+      exit;
     }
     const redirect = route.find(({ path }) => path.includes('*'));
     if (!redirect) throw `404 not found : ${window.location.pathname}`;
@@ -177,11 +181,11 @@ export class KMRouter {
       if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
       history.replaceState({ key: redirectRoute.path }, '', redirectRoute.path);
       this.container.innerHTML = redirectRoute.controller();
-      return;
+      exit;
     }
     if (redirect.hasOwnProperty('controller')) {
       this.container.innerHTML = redirect.controller();
-      return;
+      exit;
     }
     throw `404 not found : ${window.location.pathname}`;
   }

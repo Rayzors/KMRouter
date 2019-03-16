@@ -78,14 +78,14 @@ let router = new KMRouter("#app", routes)
 
 ### Route params
 
-Params can be set set to your route by sepecifing a key placed between `{}`. The url params can be used in controller by the `params` propriety.
+Params can be set set to your route by sepecifing a key placed between `{}`. The url params can be used in controller by the `params` propriety of the `request`argument of the controller.
 
 ```JS
 let routes = [
   {
     path: '/{name}';
-    controller: function(){
-      return `Hello ${router.params.name}`;
+    controller: function(request){
+      return `Hello ${request.params.name}`;
     }
   }
 ]
