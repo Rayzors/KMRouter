@@ -74,7 +74,7 @@ The Router class takes some arguments:
 let router = new KMRouter("#app", routes)
 ```
 
-## Additional route settings
+## Additional
 
 ### Route params
 
@@ -101,8 +101,8 @@ Params format can be specified by using regular expression.
 let routes = [
   {
     path: '/{name:(\\w+)}';
-    controller: function(){
-      return `Hello ${router.params.name}`;
+    controller: function(request){
+      return `Hello ${request.params.name}`;
     }
   }
 ]
@@ -112,14 +112,51 @@ let routes = [
 
 To set a 404 page, a `*` path exist. This path allow you to have a default redirection or view when url does not match with one of your routes.
 
-> ⚠️ `*` need to be escaped
+```JS
+let routes = [
+  {
+    path: '*';
+    controller: function(){
+      return `<h1>404 not found</h1>`
+    }
+  }
+]
+```
+
+### Router link
+
+A specific data attribute `data-router-link` must be added to your links to render without refreshing the page. The `href` attribute must be the route where you want to go.
+
+```HTML
+<a href="/path/to" data-router-link>label</a>
+```
+
+### Redirection
+
+Your can set redirection by two ways : directly in you route configuration or in your controller.
+
+#### In route configuration
 
 ```JS
 let routes = [
   {
-    path: '\\*';
+    path: '/';
+    redirect: '/path/to'
     controller: function(){
-      return `<h1>404 not found</h1>`
+      return 'Hello world';
+    }
+  }
+]
+```
+
+#### Or in a controller
+
+```JS
+let routes = [
+  {
+    path: '/';
+    controller: function(request){
+      return request.redirect('/path/to')
     }
   }
 ]
