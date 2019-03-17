@@ -139,8 +139,10 @@ export class KMRouter {
         this.container.innerHTML = template;
         if (redirect) return template;
       }
-    } else {
+    } else if (url.match(/^\*$/) === null) {
       this._dispatch('*', false);
+    } else {
+      throw `404 not found ${url}`;
     }
   }
 
