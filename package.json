@@ -2,7 +2,7 @@
   "name": "kmrouter",
   "version": "1.0.4",
   "description": "Un routeur JavaScript",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "webpack",
     "start": "webpack -w"
