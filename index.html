@@ -33,8 +33,7 @@
         {
           path: '/profil/{id}',
           controller(request) {
-            return `<h1>${request.params.id}</h1>
-            <a href="/" data-router-link>Aller à la home</a>`;
+            return request.redirect('/');
           }
         },
         {
@@ -45,7 +44,7 @@
           }
         },
         {
-          path: '\\*',
+          path: '*',
           controller() {
             return `<h1>404 not found</h1>
             <a href="/" data-router-link>Aller à la home</a>`;

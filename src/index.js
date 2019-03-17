@@ -21,12 +21,13 @@ export class KMRouter {
    * @memberof Router
    */
   _initEvent() {
-    window.addEventListener('load', this._render.bind(this));
-    window.addEventListener('popstate', this._render.bind(this));
-    this.container.addEventListener(
-      'click',
-      this._triggerRouterLink.bind(this)
+    window.addEventListener('load', () =>
+      this._dispatch(window.location.pathname)
     );
+    window.addEventListener('popstate', () =>
+      this._dispatch(window.location.pathname)
+    );
+    this.container.addEventListener('click', (e) => this._triggerRouterLink(e));
   }
 
   /**
@@ -42,8 +43,11 @@ export class KMRouter {
     if (path === '') {
       return '/';
     }
-    if (path.match(/^\//) === null) {
+    if (path.match(/^\//) === null && path.match(/^\*$/) === null) {
       return `/${path}`;
+    }
+    if (path.match(/^\*$/) !== null) {
+      return `\\*`;
     }
     return path;
   }
@@ -102,19 +106,36 @@ export class KMRouter {
    * @description Récupère l'objet de la route courante puis rend la page courante
    * @memberof Router
    */
-  _render() {
-    let match = this._match(window.location.pathname, this.routes);
+  _dispatch(url, isPushState = true, redirect = false) {
+    if (!url || (typeof url !== 'string' || url.trim() === '')) {
+      throw 'No url renseigned';
+    }
+
+    const match = this._match(url);
 
     if (match && match.hasOwnProperty('redirect')) {
-      this.redirect(match.redirect);
+      this._dispatch(match.redirect);
     } else if (match) {
-      this.container.innerHTML = match.controller({
-        redirect: this.redirect.bind(this),
+      if (isPushState) {
+        history.pushState({ key: url }, '', url);
+      } else if (!isPushState && url.match(/^\*$/) === null) {
+        history.replaceState({ key: url }, '', url);
+      }
+
+      const template = match.controller({
+        redirect: (uri) => this._dispatch.call(this, uri, false, true),
         params: this.params,
         path: window.location.pathname
       });
+
+      if (template && typeof template === 'string') {
+        this.container.innerHTML = template;
+        if (redirect) return template;
+      } else {
+        this._dispatch('*', false);
+      }
     } else {
-      this.redirect();
+      this._dispatch('*', false);
     }
   }
 
@@ -125,8 +146,8 @@ export class KMRouter {
    * @returns {Object} Retourne l'objet de la route correspondante
    * @memberof Router
    */
-  _match(url, routes) {
-    return routes.find(({ path }) => {
+  _match(url) {
+    return this.routes.find(({ path }) => {
       const generatedURLRegExp = this._generateURLRegExp(path);
       const matches = url.match(generatedURLRegExp);
 
@@ -159,38 +180,6 @@ export class KMRouter {
   }
 
   /**
-   * @description Redirige vers la route demandée
-   * @param {String|Object[]} [route=this.routes]
-   * @throws throw `404 not found : {window.location.pathname}
-   * @memberof Router
-   */
-  redirect(route = this.routes) {
-    if (typeof route === 'string') {
-      const redirectRoute = this._match(route, this.routes);
-      if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
-      history.replaceState({ key: route }, '', route);
-      this.container.innerHTML = redirectRoute.controller();
-      exit;
-    }
-    const redirect = route.find(({ path }) => path.includes('*'));
-    if (!redirect) throw `404 not found : ${window.location.pathname}`;
-    if (redirect.hasOwnProperty('redirect')) {
-      const redirectRoute = route.find(({ path }) =>
-        path.includes(redirect.redirect)
-      );
-      if (!redirectRoute) throw `404 not found : ${window.location.pathname}`;
-      history.replaceState({ key: redirectRoute.path }, '', redirectRoute.path);
-      this.container.innerHTML = redirectRoute.controller();
-      exit;
-    }
-    if (redirect.hasOwnProperty('controller')) {
-      this.container.innerHTML = redirect.controller();
-      exit;
-    }
-    throw `404 not found : ${window.location.pathname}`;
-  }
-
-  /**
    * @description Action au clique sur un lien ayant l'attribut 'data-router-link'
    * @param {Event} e
    * @memberof Router
@@ -199,8 +188,7 @@ export class KMRouter {
     if (e.target.getAttribute('data-router-link') !== null) {
       e.preventDefault();
       const url = e.target.getAttribute('href');
-      history.pushState({ key: url }, '', url);
-      this._render();
+      this._dispatch(url);
     }
   }
 }
