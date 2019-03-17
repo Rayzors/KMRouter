@@ -37,7 +37,7 @@ export class KMRouter {
    * @memberof Router
    */
   _formatPath(path) {
-    if (path.match(/^(\/\#|\#\/)/) !== null) {
+    if (path.match(/^(\/\#|\#\/)/)) {
       throw `bad url \`${path}\``;
     }
     if (path === '') {
@@ -46,7 +46,7 @@ export class KMRouter {
     if (path.match(/^\//) === null && path.match(/^\*$/) === null) {
       return `/${path}`;
     }
-    if (path.match(/^\*$/) !== null) {
+    if (path.match(/^\*$/)) {
       return `\\*`;
     }
     return path;
@@ -103,7 +103,7 @@ export class KMRouter {
   }
 
   /**
-   * @description Récupère l'objet de la route courante puis rend la page courante
+   * @description Récupère l'objet de la route courante puis rend la page courante. Permet également la redirection.
    * @memberof Router
    */
   _dispatch(url, isPushState = true, redirect = false) {
@@ -111,10 +111,15 @@ export class KMRouter {
       throw 'No url renseigned';
     }
 
+    if (redirect && url.match(/^(http:\/\/|https:\/\/)/)) {
+      window.location.replace(url);
+      return;
+    }
+
     const match = this._match(url);
 
     if (match && match.hasOwnProperty('redirect')) {
-      this._dispatch(match.redirect);
+      this._dispatch(match.redirect, false, true);
     } else if (match) {
       if (isPushState) {
         history.pushState({ key: url }, '', url);
@@ -122,17 +127,17 @@ export class KMRouter {
         history.replaceState({ key: url }, '', url);
       }
 
-      const template = match.controller({
-        redirect: (uri) => this._dispatch.call(this, uri, false, true),
-        params: this.params,
-        path: window.location.pathname
-      });
+      let template = '';
+      template =
+        match.controller({
+          redirect: (uri) => this._dispatch.call(this, uri, false, true),
+          params: this.params,
+          path: window.location.pathname
+        }) || '';
 
-      if (template && typeof template === 'string') {
+      if (template.trim() !== '') {
         this.container.innerHTML = template;
         if (redirect) return template;
-      } else {
-        this._dispatch('*', false);
       }
     } else {
       this._dispatch('*', false);
