@@ -142,7 +142,7 @@ export class KMRouter {
     } else if (url.match(/^\*$/) === null) {
       this._dispatch('*', false);
     } else {
-      throw `404 not found ${url}`;
+      throw `404 not found ${window.location.pathname}`;
     }
   }
 
