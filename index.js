@@ -1,40 +1,27 @@
 let router = new KMRouter([
   {
     path: '/',
-    action: function(){
-      document.body.innerHTML = 'Home'
-    },
-    leave(request) {
-      console.log('leave route');
-    },
-    before(request) {
-      console.log('before route');
+    action: function() {
+      document.body.innerHTML =
+        'Page 1 <a href="/page2" data-router-link>Page 2</a>';
     },
   },
   {
-    path: '/profile/{name:(\\w+)}',
-    action: function(request) {
-      document.body.innerHTML = `go to ${request.params.name} <span to="/" data-router-link>test</span>`;
+    path: '/page2',
+    action: function() {
+      document.body.innerHTML = `Page 2 <a href="/page3" data-router-link>Page 3</a>`;
     },
-    leave: function(request) {
-      console.log('leave route');
-    },
-    before: function(request) {
-      console.log('before route');
+  },
+  {
+    path: '/page3',
+    action: function() {
+      document.body.innerHTML = `Page 3 <a href="/" data-router-link>Page 1</a>`;
     },
   },
   {
     path: '*',
-    action: function(request) {
+    action: function() {
       document.body.innerHTML = `Not Found`;
     },
   },
 ]);
-
-router.hooks.leave = function(request) {
-  console.log('global leave');
-};
-
-router.hooks.before = function(request) {
-  console.log('global before');
-};

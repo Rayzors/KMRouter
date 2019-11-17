@@ -31,11 +31,11 @@ export declare class KMRouter {
      */
     private _formatPath;
     /**
-   * @description Check if routes is an Array of Route
-   * @param {Array} routes
-   * @returns {Array}
-   * @memberof Router
-   */
+     * @description Check if routes is an Array of Route
+     * @param {Array} routes
+     * @returns {Array}
+     * @memberof Router
+     */
     _checkRoutesType(routes: Array<Route>): void;
     /**
      * @description Get the current route and execute the associated methods
@@ -63,6 +63,7 @@ export declare class KMRouter {
      * @memberof KMRouter
      */
     private _generateURLRegExp;
+    private _hookPromisify;
     /**
      * @description Trigger navigation on click on link with the 'data-router-link' attribute
      * @private

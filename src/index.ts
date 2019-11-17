@@ -1,5 +1,6 @@
-import Route, {isRoute} from './interfaces/route';
+import Route, { isRoute } from './interfaces/route';
 import Hooks from './interfaces/hooks';
+import RouteRequest from './interfaces/request';
 
 /**
  * KMRouter
@@ -66,7 +67,7 @@ export class KMRouter {
     return path;
   }
 
-    /**
+  /**
    * @description Check if routes is an Array of Route
    * @param {Array} routes
    * @returns {Array}
@@ -77,8 +78,8 @@ export class KMRouter {
       throw 'The second argument must be an array of object';
     }
 
-    const AreAllObjectRoutes = routes.every(route => isRoute(route))
-    if(!AreAllObjectRoutes) {
+    const AreAllObjectRoutes = routes.every((route) => isRoute(route));
+    if (!AreAllObjectRoutes) {
       throw 'Routes must have a key path (string) and  a key action (function)';
     }
   }
@@ -113,12 +114,6 @@ export class KMRouter {
     if (this.matchedRoute?.redirect) {
       await this._dispatch(this.matchedRoute.redirect, false, true);
     } else if (this.matchedRoute) {
-      if (onWindowLoad && isPushState) {
-        history.pushState({ key: url }, '', url);
-      } else if (!isPushState && url.match(/^\*$/) === null) {
-        history.replaceState({ key: url }, '', url);
-      }
-
       const request = {
         redirect: async (uri: string) =>
           await this._dispatch.call(this, uri, false, true),
@@ -128,8 +123,14 @@ export class KMRouter {
 
       onWindowLoad && (await this.hooks.leave?.(request));
       onWindowLoad && (await this.matchedRoute.leave?.(request));
-      await this.hooks.before?.(request);
-      await this.matchedRoute.before?.(request);
+      await this._hookPromisify(this.hooks.before, request);
+      await this._hookPromisify(this.matchedRoute.before, request);
+
+      if (onWindowLoad && isPushState) {
+        history.pushState({ key: url }, '', url);
+      } else if (!isPushState && url.match(/^\*$/) === null) {
+        history.replaceState({ key: url }, '', url);
+      }
 
       this.matchedRoute.action(request);
     } else if (url.match(/^\*$/) === null) {
@@ -178,6 +179,15 @@ export class KMRouter {
     )}/?`.replace(/[*]/g, '\\$&');
 
     return new RegExp(routeRegExp);
+  }
+
+  private async _hookPromisify(functionRef: any, request: RouteRequest) {
+    if (!functionRef) return;
+    await new Promise((resolve) => {
+      functionRef(request, () => {
+        resolve();
+      });
+    });
   }
 
   /**
