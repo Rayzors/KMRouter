@@ -1,17 +1,18 @@
-import Router from './interfaces/router';
-import Route from './interfaces/route';
+import Route, {isRoute} from './interfaces/route';
+import Hooks from './interfaces/hooks';
 
 /**
- *
+ * KMRouter
  *
  * @export
  * @class KMRouter
- * @implements {Router}
  */
-export class KMRouter implements Router {
-  routes: Array<Route>;
-  matchedRoute: Route | undefined = undefined;
-  params: {};
+export class KMRouter {
+  private routes: Array<Route>;
+  private matchedRoute: Route | undefined = undefined;
+  private params: {};
+
+  hooks: Hooks = {};
 
   /**
    * @description Creates an instance of Router.
@@ -19,6 +20,7 @@ export class KMRouter implements Router {
    * @memberof KMRouter
    */
   constructor(routes: Array<Route>) {
+    this._checkRoutesType(routes);
     this.routes = routes;
     this.params = {};
     this.routes.map((route: Route) => ({
@@ -29,20 +31,24 @@ export class KMRouter implements Router {
   }
 
   /**
-   * @description Initialise les écouteurs d'evenement
-   * @memberof Router
+   * @description Initialize event listeners
+   * @memberof KMRouter
    */
   private _bind() {
     window.addEventListener('load', () => this.onWindowLoad());
     window.addEventListener('popstate', () => this.handlePopState());
-    document.body.addEventListener('click', (e) => this.handleRouterLink(e));
+    document.body.addEventListener(
+      'click',
+      async (e) => await this._triggerRouterLink(e)
+    );
   }
 
   /**
-   * @description Vérifie si la route est bien formatée
+   * @description Check if the path has the right format
+   * @private
    * @param {string} path
    * @returns {string}
-   * @memberof Router
+   * @memberof KMRouter
    */
   private _formatPath(path: string): string {
     if (path.match(/^(\/\#|\#\/)/)) {
@@ -55,17 +61,41 @@ export class KMRouter implements Router {
       return `/${path}`;
     }
     if (path.match(/^\*$/)) {
-      return `\\*`;
+      return `*`;
     }
     return path;
   }
 
-  /**
-   * @description Récupère l'objet de la route courante puis rend la page courante. Permet également la redirection.
+    /**
+   * @description Check if routes is an Array of Route
+   * @param {Array} routes
+   * @returns {Array}
    * @memberof Router
+   */
+  _checkRoutesType(routes: Array<Route>) {
+    if (!Array.isArray(routes)) {
+      throw 'The second argument must be an array of object';
+    }
+
+    const AreAllObjectRoutes = routes.every(route => isRoute(route))
+    if(!AreAllObjectRoutes) {
+      throw 'Routes must have a key path (string) and  a key action (function)';
+    }
+  }
+
+  /**
+   * @description Get the current route and execute the associated methods
+   * @private
+   * @param {string} url
+   * @param {boolean} [onWindowLoad=true]
+   * @param {boolean} [isPushState=true]
+   * @param {boolean} [redirect=false]
+   * @returns
+   * @memberof KMRouter
    */
   private async _dispatch(
     url: string,
+    onWindowLoad: boolean = true,
     isPushState: boolean = true,
     redirect: boolean = false
   ) {
@@ -80,21 +110,28 @@ export class KMRouter implements Router {
 
     this.matchedRoute = this._match(url);
 
-    if (this.matchedRoute && this.matchedRoute.redirect !== undefined) {
+    if (this.matchedRoute?.redirect) {
       await this._dispatch(this.matchedRoute.redirect, false, true);
     } else if (this.matchedRoute) {
-      if (isPushState) {
+      if (onWindowLoad && isPushState) {
         history.pushState({ key: url }, '', url);
       } else if (!isPushState && url.match(/^\*$/) === null) {
         history.replaceState({ key: url }, '', url);
       }
 
-      this.matchedRoute.action({
+      const request = {
         redirect: async (uri: string) =>
           await this._dispatch.call(this, uri, false, true),
         params: this.params,
         path: window.location.pathname,
-      });
+      };
+
+      onWindowLoad && (await this.hooks.leave?.(request));
+      onWindowLoad && (await this.matchedRoute.leave?.(request));
+      await this.hooks.before?.(request);
+      await this.matchedRoute.before?.(request);
+
+      this.matchedRoute.action(request);
     } else if (url.match(/^\*$/) === null) {
       await this._dispatch('*', false);
     } else {
@@ -103,7 +140,7 @@ export class KMRouter implements Router {
   }
 
   /**
-   * @description Vérifie si l'url existe parmi les routes
+   * @description Check if the requested URL exist in the route array
    * @param {string} url
    * @returns {(Route|undefined)}
    * @memberof KMRouter
@@ -117,7 +154,7 @@ export class KMRouter implements Router {
         return false;
       }
 
-      if (generatedURLRegExp.test(url) && matches && matches[0].includes(url)) {
+      if (generatedURLRegExp.test(url) && matches?.[0]?.includes(url)) {
         this.params = matches.groups || {};
         return true;
       }
@@ -127,66 +164,59 @@ export class KMRouter implements Router {
   }
 
   /**
-   * @description Génère la regexp de l'url
+   * @description Generate the URL Regex
+   * @private
    * @param {string} path
    * @returns {RegExp}
-   * @memberof Router
+   * @memberof KMRouter
    */
   private _generateURLRegExp(path: string): RegExp {
-    const reg = /\{([^\s\/\:]+)\:?(?:\((.*?)\))?\}/g;
-    return new RegExp(
-      `${path.replace(reg, (...args) =>
-        args[2] ? `(?<${args[1]}>${args[2]})` : `(?<${args[1]}>\\w+)`
-      )}/?`
-    );
+    const reg = /\{([^\s/\:]+)\:?(?:\((.*?)\))?\}/g;
+
+    const routeRegExp = `${path.replace(reg, (...args) =>
+      args[2] ? `(?<${args[1]}>${args[2]})` : `(?<${args[1]}>\\w+)`
+    )}/?`.replace(/[*]/g, '\\$&');
+
+    return new RegExp(routeRegExp);
   }
 
   /**
-   * @description Action au clique sur un lien ayant l'attribut 'data-router-link'
+   * @description Trigger navigation on click on link with the 'data-router-link' attribute
+   * @private
    * @param {MouseEvent} e
-   * @memberof Router
+   * @memberof KMRouter
    */
   private async _triggerRouterLink(e: MouseEvent) {
     const el = e.target as HTMLElement;
 
     if (
-      el &&
-      el.getAttribute('data-router-link') !== null &&
-      el.getAttribute('href') !== null
+      el?.closest('[data-router-link]')?.getAttribute?.('href') ||
+      el?.closest('[data-router-link]')?.getAttribute?.('to')
     ) {
-      const url = el.getAttribute('href')!;
-      // this._leaveHook();
+      e.preventDefault();
+      const url =
+        el?.closest('[data-router-link]')?.getAttribute?.('href') ||
+        el?.closest('[data-router-link]')?.getAttribute?.('to') ||
+        '*';
       await this._dispatch(url);
-      // this._afterHook();
     }
   }
 
+  /**
+   * @description get the right route on window load event
+   * @private
+   * @memberof KMRouter
+   */
   private async onWindowLoad() {
-    await this._dispatch(window.location.pathname);
+    await this._dispatch(window.location.pathname, false);
   }
 
+  /**
+   * @description get the right route on popstate event
+   * @private
+   * @memberof KMRouter
+   */
   private async handlePopState() {
     await this._dispatch(window.location.pathname);
   }
-
-  private async handleRouterLink(e: MouseEvent) {
-    e.preventDefault();
-    await this._triggerRouterLink(e);
-  }
-
-  // _beforeHook() {
-  //   return (
-  //     this.matchedRoute &&
-  //     this.matchedRoute.hasOwnProperty('before') &&
-  //     this.matchedRoute.before()
-  //   );
-  // }
-
-  // _leaveHook() {
-  //   return (
-  //     this.matchedRoute &&
-  //     this.matchedRoute.hasOwnProperty('leave') &&
-  //     this.matchedRoute.leave()
-  //   );
-  // }
 }

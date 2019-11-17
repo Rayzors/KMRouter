@@ -1,9 +1,9 @@
 import RouteRequest from './request';
-export default interface Route {
+import Hooks from './hooks';
+export default interface Route extends Hooks {
     path: string;
-    before?(): any;
     action(request: RouteRequest): any;
-    leave?(): any;
     redirect?: string;
 }
+export declare function isRoute(route: Route): route is Route;
 //# sourceMappingURL=route.d.ts.map

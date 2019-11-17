@@ -1,9 +1,12 @@
 import RouteRequest from './request';
+import Hooks from './hooks';
 
-export default interface Route {
+export default interface Route extends Hooks {
   path: string;
-  before?(): any;
   action(request: RouteRequest): any;
-  leave?(): any;
   redirect?: string;
+}
+
+export function isRoute(route: Route): route is Route{
+  return (route as Route).path !== undefined && (route as Route).action !== undefined && typeof (route as Route).action === 'function';
 }

@@ -1,16 +1,16 @@
-import Router from './interfaces/router';
 import Route from './interfaces/route';
+import Hooks from './interfaces/hooks';
 /**
- *
+ * KMRouter
  *
  * @export
  * @class KMRouter
- * @implements {Router}
  */
-export declare class KMRouter implements Router {
-    routes: Array<Route>;
-    matchedRoute: Route | undefined;
-    params: {};
+export declare class KMRouter {
+    private routes;
+    private matchedRoute;
+    private params;
+    hooks: Hooks;
     /**
      * @description Creates an instance of Router.
      * @param {Array<Route>} routes
@@ -18,44 +18,69 @@ export declare class KMRouter implements Router {
      */
     constructor(routes: Array<Route>);
     /**
-     * @description Initialise les écouteurs d'evenement
-     * @memberof Router
+     * @description Initialize event listeners
+     * @memberof KMRouter
      */
     private _bind;
     /**
-     * @description Vérifie si la route est bien formatée
+     * @description Check if the path has the right format
+     * @private
      * @param {string} path
      * @returns {string}
-     * @memberof Router
+     * @memberof KMRouter
      */
     private _formatPath;
     /**
-     * @description Récupère l'objet de la route courante puis rend la page courante. Permet également la redirection.
-     * @memberof Router
+   * @description Check if routes is an Array of Route
+   * @param {Array} routes
+   * @returns {Array}
+   * @memberof Router
+   */
+    _checkRoutesType(routes: Array<Route>): void;
+    /**
+     * @description Get the current route and execute the associated methods
+     * @private
+     * @param {string} url
+     * @param {boolean} [onWindowLoad=true]
+     * @param {boolean} [isPushState=true]
+     * @param {boolean} [redirect=false]
+     * @returns
+     * @memberof KMRouter
      */
     private _dispatch;
     /**
-     * @description Vérifie si l'url existe parmi les routes
+     * @description Check if the requested URL exist in the route array
      * @param {string} url
      * @returns {(Route|undefined)}
      * @memberof KMRouter
      */
     private _match;
     /**
-     * @description Génère la regexp de l'url
+     * @description Generate the URL Regex
+     * @private
      * @param {string} path
      * @returns {RegExp}
-     * @memberof Router
+     * @memberof KMRouter
      */
     private _generateURLRegExp;
     /**
-     * @description Action au clique sur un lien ayant l'attribut 'data-router-link'
+     * @description Trigger navigation on click on link with the 'data-router-link' attribute
+     * @private
      * @param {MouseEvent} e
-     * @memberof Router
+     * @memberof KMRouter
      */
     private _triggerRouterLink;
+    /**
+     * @description get the right route on window load event
+     * @private
+     * @memberof KMRouter
+     */
     private onWindowLoad;
+    /**
+     * @description get the right route on popstate event
+     * @private
+     * @memberof KMRouter
+     */
     private handlePopState;
-    private handleRouterLink;
 }
 //# sourceMappingURL=index.d.ts.map
