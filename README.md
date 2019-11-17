@@ -4,7 +4,7 @@
 
 ### Server configuration
 
-Before using this router, the server must be configured. The server must redirect all the requests to `ìndex.html`
+Before using this router, the server must be configured. The server must redirect all the requests to `index.html`
 
 #### Apache
 
@@ -25,14 +25,6 @@ location / {
 }
 ```
 
-### Set the view container
-
-A `div` must be added in the `<body>` of your `index.html` to receive the view sent by the router.
-
-```HTML
-<div id="app"></div>
-```
-
 ### Package Installation
 
 #### NPM
@@ -48,16 +40,25 @@ import { KMRouter } from 'kmrouter';
 Routes are an array of object where each object is a route. A route must have 2 keys :
 
 - path : `String`. The path of your route.
-- controller : `Function`. The controller of your route.
+- action : `Function`. The router callback.
+- before (optional) : `Function`. Function executed before the action.
+- leave (optional) : `Function`. Function executed on leaving route.
 - redirect (optional) : `String`. The route where you want to be redirected.
 
 ```JS
 let routes = [
   {
-    path: '/';
-    controller: function(){
-      return 'Hello world';
-    }
+    path: '/',
+    action: function(){
+      document.body.innerHTML = 'Home'
+    },
+    leave(request) {
+      console.log('leave route');
+    },
+    before(request, next) {
+      console.log('before route');
+      next()
+    },
     // redirect: '/hello'
   }
 ]
@@ -67,11 +68,10 @@ let routes = [
 
 The Router class takes some arguments:
 
-- The container of you app where views will be rendered: `String` or `Node`.
-- List of your routes : `Object[]`.
+- List of your routes : `Route[]`.
 
 ```JS
-let router = new KMRouter("#app", routes)
+let router = new KMRouter(routes)
 ```
 
 ## Additional
@@ -84,8 +84,8 @@ Params can be set set to your route by sepecifing a key placed between `{}`. The
 let routes = [
   {
     path: '/{name}';
-    controller: function(request){
-      return `Hello ${request.params.name}`;
+    action: function(request){
+      document.body.innerHTML = `Hello ${request.params.name}`;
     }
   }
 ]
@@ -101,8 +101,8 @@ Params format can be specified by using regular expression.
 let routes = [
   {
     path: '/{name:(\\w+)}';
-    controller: function(request){
-      return `Hello ${request.params.name}`;
+    action: function(request){
+      document.body.innerHTML = `Hello ${request.params.name}`;
     }
   }
 ]
@@ -116,8 +116,8 @@ To set a 404 page, a `*` path exist. This path allow you to have a default redir
 let routes = [
   {
     path: '*';
-    controller: function(){
-      return `<h1>404 not found</h1>`
+    action: function(){
+      document.body.innerHTML = `<h1>404 not found</h1>`
     }
   }
 ]
@@ -142,8 +142,8 @@ let routes = [
   {
     path: '/';
     redirect: '/path/to'
-    controller: function(){
-      return 'Hello world';
+    action: function(){
+      document.body.innerHTML = 'Hello world';
     }
   }
 ]
@@ -155,8 +155,8 @@ let routes = [
 let routes = [
   {
     path: '/';
-    controller: function(request){
-      return request.redirect('/path/to')
+    action: function(request){
+      request.redirect('/path/to')
     }
   }
 ]
