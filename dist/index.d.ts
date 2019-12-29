@@ -32,18 +32,23 @@ export declare class KMRouter {
     private _formatPath;
     /**
      * @description Check if routes is an Array of Route
-     * @param {Array} routes
-     * @returns {Array}
-     * @memberof Router
+     * @private
+     * @param {Array<Route>} routes
+     * @memberof KMRouter
      */
-    _checkRoutesType(routes: Array<Route>): void;
+    private _checkRoutesType;
     /**
      * @description Get the current route and execute the associated methods
      * @private
-     * @param {string} url
-     * @param {boolean} [onWindowLoad=true]
-     * @param {boolean} [isPushState=true]
-     * @param {boolean} [redirect=false]
+     * @param {{
+     *     EventType: string;
+     *     url: string;
+     *     redirect?: boolean;
+     *   }} {
+     *     EventType,
+     *     url,
+     *     redirect = false,
+     *   }
      * @returns
      * @memberof KMRouter
      */
@@ -63,7 +68,29 @@ export declare class KMRouter {
      * @memberof KMRouter
      */
     private _generateURLRegExp;
+    /**
+     * @description Promisify hook to wait for next() to go to the next page
+     * @private
+     * @param {*} fn
+     * @param {RouteRequest} request
+     * @returns
+     * @memberof KMRouter
+     */
     private _hookPromisify;
+    /**
+     * @description
+     * @private
+     * @param {{
+     *     url: string;
+     *     EventType: string;
+     *   }} {
+     *     url,
+     *     EventType,
+     *   }
+     * @returns {RouteRequest}
+     * @memberof KMRouter
+     */
+    private _createRequestObject;
     /**
      * @description Trigger navigation on click on link with the 'data-router-link' attribute
      * @private
@@ -74,12 +101,14 @@ export declare class KMRouter {
     /**
      * @description get the right route on window load event
      * @private
+     * @param {Event} e
      * @memberof KMRouter
      */
     private onWindowLoad;
     /**
      * @description get the right route on popstate event
      * @private
+     * @param {PopStateEvent} e
      * @memberof KMRouter
      */
     private handlePopState;

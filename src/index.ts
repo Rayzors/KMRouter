@@ -36,12 +36,9 @@ export class KMRouter {
    * @memberof KMRouter
    */
   private _bind() {
-    window.addEventListener('load', () => this.onWindowLoad());
-    window.addEventListener('popstate', () => this.handlePopState());
-    document.body.addEventListener(
-      'click',
-      async (e) => await this._triggerRouterLink(e)
-    );
+    window.addEventListener('load', (e) => this.onWindowLoad(e));
+    window.addEventListener('popstate', (e) => this.handlePopState(e));
+    document.body.addEventListener('click', (e) => this._triggerRouterLink(e));
   }
 
   /**
@@ -69,11 +66,11 @@ export class KMRouter {
 
   /**
    * @description Check if routes is an Array of Route
-   * @param {Array} routes
-   * @returns {Array}
-   * @memberof Router
+   * @private
+   * @param {Array<Route>} routes
+   * @memberof KMRouter
    */
-  _checkRoutesType(routes: Array<Route>) {
+  private _checkRoutesType(routes: Array<Route>) {
     if (!Array.isArray(routes)) {
       throw 'The second argument must be an array of object';
     }
@@ -87,19 +84,27 @@ export class KMRouter {
   /**
    * @description Get the current route and execute the associated methods
    * @private
-   * @param {string} url
-   * @param {boolean} [onWindowLoad=true]
-   * @param {boolean} [isPushState=true]
-   * @param {boolean} [redirect=false]
+   * @param {{
+   *     EventType: string;
+   *     url: string;
+   *     redirect?: boolean;
+   *   }} {
+   *     EventType,
+   *     url,
+   *     redirect = false,
+   *   }
    * @returns
    * @memberof KMRouter
    */
-  private async _dispatch(
-    url: string,
-    onWindowLoad: boolean = true,
-    isPushState: boolean = true,
-    redirect: boolean = false
-  ) {
+  private async _dispatch({
+    EventType,
+    url,
+    redirect = false,
+  }: {
+    EventType: string;
+    url: string;
+    redirect?: boolean;
+  }) {
     if (!url || url.trim() === '') {
       throw 'No url renseigned';
     }
@@ -109,34 +114,42 @@ export class KMRouter {
       return;
     }
 
+    const request = this._makeRequestObject({ url, EventType });
+
+    // Leave Hooks
+    EventType !== 'load' &&
+      (await this._hookPromisify(this.hooks.leave, request));
+    EventType !== 'load' &&
+      (await this._hookPromisify(this.matchedRoute?.leave, request));
+
     this.matchedRoute = this._match(url);
 
     if (this.matchedRoute?.redirect) {
-      await this._dispatch(this.matchedRoute.redirect, false, true);
+      this._dispatch({
+        EventType,
+        url: this.matchedRoute.redirect,
+        redirect: true,
+      });
     } else if (this.matchedRoute) {
-      const request = {
-        redirect: async (uri: string) =>
-          await this._dispatch.call(this, uri, false, true),
-        params: this.params,
-        path: window.location.pathname,
-      };
+      const request = this._makeRequestObject({ url, EventType });
 
-      onWindowLoad && (await this.hooks.leave?.(request));
-      onWindowLoad && (await this.matchedRoute.leave?.(request));
+      // Before Hooks
       await this._hookPromisify(this.hooks.before, request);
       await this._hookPromisify(this.matchedRoute.before, request);
 
-      if (onWindowLoad && isPushState) {
-        history.pushState({ key: url }, '', url);
-      } else if (!isPushState && url.match(/^\*$/) === null) {
-        history.replaceState({ key: url }, '', url);
-      }
+      // Handle pushState & replaceState
+      EventType === 'click' &&
+        history.pushState({ key: url }, document.title, url);
+      EventType === 'load' &&
+        url.match(/^\*$/) === null &&
+        history.replaceState({ key: url }, document.title, url);
 
+      // trigger action
       this.matchedRoute.action(request);
     } else if (url.match(/^\*$/) === null) {
-      await this._dispatch('*', false);
+      this._dispatch({ EventType, url: '*' });
     } else {
-      throw `404 not found ${window.location.pathname}`;
+      throw `404 not found ${url}`;
     }
   }
 
@@ -181,13 +194,53 @@ export class KMRouter {
     return new RegExp(routeRegExp);
   }
 
-  private async _hookPromisify(functionRef: any, request: RouteRequest) {
-    if (!functionRef) return;
+  /**
+   * @description Promisify hook to wait for next() to go to the next page
+   * @private
+   * @param {*} fn
+   * @param {RouteRequest} request
+   * @returns
+   * @memberof KMRouter
+   */
+  private async _hookPromisify(fn: any, request: RouteRequest) {
+    if (!fn) return;
     await new Promise((resolve) => {
-      functionRef(request, () => {
+      fn(request, () => {
         resolve();
       });
     });
+  }
+
+  /**
+   * @description
+   * @private
+   * @param {{
+   *     url: string;
+   *     EventType: string;
+   *   }} {
+   *     url,
+   *     EventType,
+   *   }
+   * @returns {RouteRequest}
+   * @memberof KMRouter
+   */
+  private _makeRequestObject({
+    url,
+    EventType,
+  }: {
+    url: string;
+    EventType: string;
+  }): RouteRequest {
+    return {
+      redirect: (uri: string) =>
+        this._dispatch.call(this, {
+          EventType,
+          url: uri,
+          redirect: true,
+        }),
+      params: this.params,
+      path: url,
+    };
   }
 
   /**
@@ -198,7 +251,6 @@ export class KMRouter {
    */
   private async _triggerRouterLink(e: MouseEvent) {
     const el = e.target as HTMLElement;
-
     if (
       el?.closest('[data-router-link]')?.getAttribute?.('href') ||
       el?.closest('[data-router-link]')?.getAttribute?.('to')
@@ -208,25 +260,33 @@ export class KMRouter {
         el?.closest('[data-router-link]')?.getAttribute?.('href') ||
         el?.closest('[data-router-link]')?.getAttribute?.('to') ||
         '*';
-      await this._dispatch(url);
+      this._dispatch({ EventType: e.type, url });
     }
   }
 
   /**
    * @description get the right route on window load event
    * @private
+   * @param {Event} e
    * @memberof KMRouter
    */
-  private async onWindowLoad() {
-    await this._dispatch(window.location.pathname, false);
+  private onWindowLoad(e: Event) {
+    this._dispatch({
+      EventType: e.type,
+      url: window.location.pathname,
+    });
   }
 
   /**
    * @description get the right route on popstate event
    * @private
+   * @param {PopStateEvent} e
    * @memberof KMRouter
    */
-  private async handlePopState() {
-    await this._dispatch(window.location.pathname);
+  private handlePopState(e: PopStateEvent) {
+    this._dispatch({
+      EventType: e.type,
+      url: e.state?.key,
+    });
   }
 }

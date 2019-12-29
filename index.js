@@ -19,6 +19,12 @@ let router = new KMRouter([
     },
   },
   {
+    path: '/{name}',
+    action: function(request) {
+      document.body.innerHTML = `Page 1 : ${request.params.name} <a href="/page2" data-router-link>Page 2</a>`;
+    },
+  },
+  {
     path: '*',
     action: function() {
       document.body.innerHTML = `Not Found`;
