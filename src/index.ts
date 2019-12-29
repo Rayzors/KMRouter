@@ -49,19 +49,23 @@ export class KMRouter {
    * @memberof KMRouter
    */
   private _formatPath(path: string): string {
-    if (path.match(/^(\/\#|\#\/)/)) {
-      throw `bad url \`${path}\``;
+    try {
+      if (path.match(/^(\/\#|\#\/)/)) {
+        throw `bad url \`${path}\``;
+      }
+      if (path === '') {
+        return '/';
+      }
+      if (path.match(/^\//) === null && path.match(/^\*$/) === null) {
+        return `/${path}`;
+      }
+      if (path.match(/^\*$/)) {
+        return `*`;
+      }
+      return path;
+    } catch (error) {
+      throw error;
     }
-    if (path === '') {
-      return '/';
-    }
-    if (path.match(/^\//) === null && path.match(/^\*$/) === null) {
-      return `/${path}`;
-    }
-    if (path.match(/^\*$/)) {
-      return `*`;
-    }
-    return path;
   }
 
   /**
@@ -71,13 +75,17 @@ export class KMRouter {
    * @memberof KMRouter
    */
   private _checkRoutesType(routes: Array<Route>) {
-    if (!Array.isArray(routes)) {
-      throw 'The second argument must be an array of object';
-    }
+    try {
+      if (!Array.isArray(routes)) {
+        throw 'The second argument must be an array of object';
+      }
 
-    const AreAllObjectRoutes = routes.every((route) => isRoute(route));
-    if (!AreAllObjectRoutes) {
-      throw 'Routes must have a key path (string) and  a key action (function)';
+      const AreAllObjectRoutes = routes.every((route) => isRoute(route));
+      if (!AreAllObjectRoutes) {
+        throw 'Routes must have a key path (string) and  a key action (function)';
+      }
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -105,51 +113,55 @@ export class KMRouter {
     url: string;
     redirect?: boolean;
   }) {
-    if (!url || url.trim() === '') {
-      throw 'No url renseigned';
-    }
+    try {
+      if (!url || url.trim() === '') {
+        throw 'No url renseigned';
+      }
 
-    if (redirect && url.match(/^(http:\/\/|https:\/\/)/)) {
-      window.location.replace(url);
-      return;
-    }
+      if (redirect && url.match(/^(http:\/\/|https:\/\/)/)) {
+        window.location.replace(url);
+        return;
+      }
 
-    const request = this._makeRequestObject({ url, EventType });
-
-    // Leave Hooks
-    EventType !== 'load' &&
-      (await this._hookPromisify(this.hooks.leave, request));
-    EventType !== 'load' &&
-      (await this._hookPromisify(this.matchedRoute?.leave, request));
-
-    this.matchedRoute = this._match(url);
-
-    if (this.matchedRoute?.redirect) {
-      this._dispatch({
-        EventType,
-        url: this.matchedRoute.redirect,
-        redirect: true,
-      });
-    } else if (this.matchedRoute) {
       const request = this._makeRequestObject({ url, EventType });
 
-      // Before Hooks
-      await this._hookPromisify(this.hooks.before, request);
-      await this._hookPromisify(this.matchedRoute.before, request);
+      // Leave Hooks
+      EventType !== 'load' &&
+        (await this._hookPromisify(this.hooks.leave, request));
+      EventType !== 'load' &&
+        (await this._hookPromisify(this.matchedRoute?.leave, request));
 
-      // Handle pushState & replaceState
-      EventType === 'click' &&
-        history.pushState({ key: url }, document.title, url);
-      EventType === 'load' &&
-        url.match(/^\*$/) === null &&
-        history.replaceState({ key: url }, document.title, url);
+      this.matchedRoute = this._match(url);
 
-      // trigger action
-      this.matchedRoute.action(request);
-    } else if (url.match(/^\*$/) === null) {
-      this._dispatch({ EventType, url: '*' });
-    } else {
-      throw `404 not found ${url}`;
+      if (this.matchedRoute?.redirect) {
+        this._dispatch({
+          EventType,
+          url: this.matchedRoute.redirect,
+          redirect: true,
+        });
+      } else if (this.matchedRoute) {
+        const request = this._makeRequestObject({ url, EventType });
+
+        // Before Hooks
+        await this._hookPromisify(this.hooks.before, request);
+        await this._hookPromisify(this.matchedRoute.before, request);
+
+        // Handle pushState & replaceState
+        EventType === 'click' &&
+          history.pushState({ key: url }, document.title, url);
+        EventType === 'load' &&
+          url.match(/^\*$/) === null &&
+          history.replaceState({ key: url }, document.title, url);
+
+        // trigger action
+        this.matchedRoute.action(request);
+      } else if (url.match(/^\*$/) === null) {
+        this._dispatch({ EventType, url: '*' });
+      } else {
+        throw `404 not found ${url}`;
+      }
+    } catch (error) {
+      throw error;
     }
   }
 

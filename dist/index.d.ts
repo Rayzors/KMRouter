@@ -90,7 +90,7 @@ export declare class KMRouter {
      * @returns {RouteRequest}
      * @memberof KMRouter
      */
-    private _createRequestObject;
+    private _makeRequestObject;
     /**
      * @description Trigger navigation on click on link with the 'data-router-link' attribute
      * @private
