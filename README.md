@@ -194,7 +194,7 @@ const routes = [
 ]
 ```
 
-#### Or in a controller
+#### Or in an action method
 
 ```JS
 const routes = [

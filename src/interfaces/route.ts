@@ -7,6 +7,11 @@ export default interface Route extends Hooks {
   redirect?: string;
 }
 
-export function isRoute(route: Route): route is Route{
-  return (route as Route).path !== undefined && (route as Route).action !== undefined && typeof (route as Route).action === 'function';
+export function isRoute(route: Route): route is Route {
+  return (
+    (route as Route).path !== undefined &&
+    typeof (route as Route).path === 'string' &&
+    (route as Route).action !== undefined &&
+    typeof (route as Route).action === 'function'
+  );
 }

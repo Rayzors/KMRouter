@@ -112,5 +112,17 @@ export declare class KMRouter {
      * @memberof KMRouter
      */
     private handlePopState;
+    /**
+     * @description Allow the user to redirect and add a state in his history
+     * @param {string} url
+     * @memberof KMRouter
+     */
+    push(url: string): void;
+    /**
+     * @description Allow the user to redirect and replace the current state in his history
+     * @param {string} url
+     * @memberof KMRouter
+     */
+    replace(url: string): void;
 }
 //# sourceMappingURL=index.d.ts.map
