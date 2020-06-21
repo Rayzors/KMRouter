@@ -29,10 +29,18 @@ location / {
 
 #### NPM
 
-`npm i kmrouter`
+`npm i @rayzors/router`
 
 ```JS
-import { KMRouter } from 'kmrouter';
+import { KMRouter } from '@rayzors/router';
+```
+
+#### YARN
+
+`yarn add @rayzors/router`
+
+```JS
+import { KMRouter } from '@rayzors/router';
 ```
 
 ### Routes definition

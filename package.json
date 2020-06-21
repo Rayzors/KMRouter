@@ -1,6 +1,6 @@
 {
-  "name": "kmrouter",
-  "version": "0.0.1git",
+  "name": "@rayzors/router",
+  "version": "0.1.0",
   "description": "Un routeur JavaScript",
   "main": "dist/index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/Rayzors/myRouter.git"
   },
   "author": "Kevin Manssat",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Rayzors/myRouter/issues"
   },
