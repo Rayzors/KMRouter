@@ -2,26 +2,23 @@ const path = require('path');
 
 module.exports = {
   mode: 'production',
-  entry: './src/index.js',
-  devtool: 'source-map',
+  entry: './src/index.ts',
+  devtool: 'inline-source-map',
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
   },
   module: {
     rules: [
       {
-        test: /\.m?js$/,
-        exclude: /(node_modules)/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-            plugins: ['@babel/plugin-transform-named-capturing-groups-regex']
-          }
-        }
-      }
-    ]
-  }
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
 };

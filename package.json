@@ -1,6 +1,6 @@
 {
   "name": "kmrouter",
-  "version": "1.0.6",
+  "version": "0.0.1git",
   "description": "Un routeur JavaScript",
   "main": "dist/index.js",
   "scripts": {
@@ -23,6 +23,8 @@
     "@babel/plugin-transform-named-capturing-groups-regex": "^7.3.0",
     "@babel/preset-env": "^7.3.4",
     "babel-loader": "^8.0.5",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3"
   }
